@@ -6,7 +6,7 @@ def main():
     pattern = './corpus/*.txt'
     files = glob.glob(pattern)
     vectorizer = TfidfVectorizer(input='filename', max_df=.9, stop_words='english')
-    tfidf_matrix = vectorizer.fit_transform(files).toarray()
+    tfidf_matrix = vectorizer.fit_transform(files)
 
     similarity = cosine_similarity(tfidf_matrix)
     for index, file in enumerate(files):
