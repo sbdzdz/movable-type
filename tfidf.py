@@ -1,19 +1,27 @@
+import os
 import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
-from collections import Counter
+from sklearn.metrics.pairwise import cosine_similarity
 from nltk.corpus import gutenberg
 
-corpus = {title: gutenberg.raw(title) for title in gutenberg.fileids()}
-vectorizer = TfidfVectorizer(max_df=.9, stop_words='english')
+def main():
+    path = './corpus'
+    titles, corpus = [], []
+    for filename in os.listdir(path):
+        file_path = os.path.join(path, filename)
+        titles.append(filename)
+        with open(file_path, 'r') as f:
+            corpus.append(f.read().replace('\n', ''))
+    titles = gutenberg.fileids()
+    corpus = [gutenberg.raw(title) for title in titles]
+    vectorizer = TfidfVectorizer(max_df=.9, stop_words='english')
+    weights = vectorizer.fit_transform(corpus).toarray()
 
-weights = vectorizer.fit_transform(corpus.values())
-weights = weights.toarray()
-#weights = np.asarray(weights.mean(axis=0)).ravel().tolist()
-#weights_df = pd.DataFrame({'term': vectorizer.get_feature_names(), 'weight': weights})
+    similarity = cosine_similarity(weights)
+    most_similar = np.argmax(similarity, axis=0)
+    for index, title in enumerate(titles):
+        print("{}: {}".format(title, (list(similarity[index]))))
 
-for index, title in enumerate(corpus):
-    print(title)
-    df = pd.DataFrame({'term': vectorizer.get_feature_names(), 'weight': weights[index]})
-    print(df.sort_values(by='weight', ascending=False).head(5))
-    print("\n\n\n")
+if __name__ == '__main__':
+    main()
