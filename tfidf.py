@@ -13,20 +13,26 @@ def main():
     files = glob.glob(pattern)
     vectorizer = TfidfVectorizer(input='filename', max_df=.5, min_df=1, stop_words='english')
     tfidf_matrix = vectorizer.fit_transform(files)
+    terms = vectorizer.get_feature_names()
+
+    #most popular terms
+    maxmatrix = np.argmax(tfidf_matrix.toarray(), axis=1)
+    for index, document in enumerate(files):
+        print("{}: {}".format(document, terms[maxmatrix[index]]))
 
     #cosine similarity
     similarity = cosine_similarity(tfidf_matrix)
     for index, file in enumerate(files):
         print("{}: {}".format(file, (list(similarity[index]))))
 
-    dense_tfidf_matrix = tfidf_matrix.todense()
     #t-SNE
     tsne = TSNE(n_components=2,
                 random_state=0,
                 n_iter=10000,
                 metric='cosine',
                 learning_rate=1,
-                perplexity=10)
+                perplexity=5)
+    dense_tfidf_matrix = tfidf_matrix.todense()
     points_tsne = tsne.fit_transform(dense_tfidf_matrix)
 
     #PCA
@@ -37,6 +43,8 @@ def main():
     matplotlib.style.use('ggplot')
     df = pd.DataFrame(points_tsne, index=files, columns=['x', 'y'])
     fig, ax = plt.subplots()
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
     df.plot('x', 'y', kind='scatter', ax=ax)
     for k, v in df.iterrows():
         ax.annotate(k.split('-')[1], v)
