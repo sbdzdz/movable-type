@@ -1,12 +1,19 @@
 from collections import Counter
+from math import log
 
-d1 = 'egg bacon sausage and spam'
-d2 = 'spam bacon sausage and spam'
-d3 = 'spam egg spam spam bacon and spam'
-d3 = 'spam egg spam spam bacon and spam'
-d4 = 'spam spam spam spam spam spam baked beans spam spam spam'
-D = {d1, d2, d3, d4}
+doc1 = 'egg bacon sausage and spam'
+doc2 = 'spam bacon sausage and spam'
+doc3 = 'spam egg spam spam bacon and spam'
+doc4 = 'spam spam baked beans and spam'
+corpus = {doc1, doc2, doc3, doc4}
 
-counter = Counter(d2.split())
-total = sum(counter.values())
-term_frequencies = {term: counter[term]/total for term in counter}
+count = Counter(doc2.split())
+terms = count.keys()
+tf_idf = {}
+
+for term in terms:
+    tf = count[term]/len(terms)
+    idf = log(len(corpus)/(sum(term in document.split() for document in corpus)))
+    tf_idf[term] = tf*idf
+
+print(tf_idf)
