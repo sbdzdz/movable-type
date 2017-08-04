@@ -3,16 +3,24 @@ import matplotlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from nltk.stem.snowball import EnglishStemmer
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 
+class StemmingTfidfVectorizer(TfidfVectorizer):
+    def build_analyzer(self):
+        stemmer = EnglishStemmer()
+        analyzer = super(TfidfVectorizer, self).build_analyzer()
+        return lambda doc: [stemmer.stem(word) for word in analyzer(doc)]
+
+
 def main():
     pattern = './corpus/*.txt'
     documents = glob.glob(pattern)
-    vectorizer = TfidfVectorizer(input='filename', max_df=.5, min_df=1, stop_words='english')
+    vectorizer = StemmingTfidfVectorizer(input='filename', max_df=.5, min_df=1, stop_words='english')
     tfidf_matrix = vectorizer.fit_transform(documents)
     terms = vectorizer.get_feature_names()
 
