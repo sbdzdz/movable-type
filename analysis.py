@@ -2,6 +2,7 @@ import glob
 import matplotlib
 import numpy as np
 import pandas as pd
+import re
 import matplotlib.pyplot as plt
 from nltk.stem.snowball import EnglishStemmer
 from sklearn.decomposition import PCA
@@ -18,7 +19,7 @@ class StemmingTfidfVectorizer(TfidfVectorizer):
 
 
 def main():
-    pattern = './corpus/*.txt'
+    pattern = './corpus/*'
     documents = glob.glob(pattern)
     vectorizer = StemmingTfidfVectorizer(input='filename', max_df=.5, min_df=1, stop_words='english')
     tfidf_matrix = vectorizer.fit_transform(documents)
@@ -30,14 +31,14 @@ def main():
         print("{}: {}".format(document, terms[maxmatrix[index]]))
 
     #clustering
-    kmeans = KMeans(n_clusters=5, random_state=0, n_init=20)
-    for document, cluster in zip(documents, kmeans.fit_predict(tfidf_matrix)):
-        print("{}: {}".format(document, cluster))
+    # kmeans = KMeans(n_clusters=5, random_state=0, n_init=20)
+    # for document, cluster in zip(documents, kmeans.fit_predict(tfidf_matrix)):
+        # print("{}: {}".format(document, cluster))
 
     #cosine similarity
-    similarity = cosine_similarity(tfidf_matrix)
-    for index, file in enumerate(documents):
-        print("{}: {}".format(file, (list(similarity[index]))))
+    # similarity = cosine_similarity(tfidf_matrix)
+    # # for index, file in enumerate(documents):
+        # print("{}: {}".format(file, (list(similarity[index]))))
 
     #t-SNE
     tsne = TSNE(n_components=2,
@@ -61,7 +62,7 @@ def main():
     ax.set_yticklabels([])
     df.plot('x', 'y', kind='scatter', ax=ax)
     for k, v in df.iterrows():
-        ax.annotate(k.split('-')[1], v)
+        ax.annotate(re.search(r'-(.*?)\.', k).group(1), v)
     plt.show()
 
 if __name__ == '__main__':
