@@ -10,6 +10,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
+from wordcloud import WordCloud, ImageColorGenerator
+from matplotlib import pyplot as plt
+from PIL import Image
 
 class StemmingTfidfVectorizer(TfidfVectorizer):
     def build_analyzer(self):
@@ -18,17 +21,36 @@ class StemmingTfidfVectorizer(TfidfVectorizer):
         return lambda doc: [stemmer.stem(word) for word in analyzer(doc)]
 
 
+def generate_wordcloud(tfidf_scores, image, saveto='wordcloud.png'):
+    coloring = np.array(Image.open(image))
+    image_colors = ImageColorGenerator(coloring)
+    wc = WordCloud(
+            max_words=500,
+            mask=coloring,
+            max_font_size=40,
+            random_state=42,
+            background_color = '#1A1A25',
+            color_func=image_colors,
+            collocations=False,
+            font_path='~/Library/Fonts/HelveticaNeueLT/HelveticaNeueLT-BoldCond.otf',
+            relative_scaling=0.3)
+
+    wc.generate_from_frequencies(tfidf_scores)
+    wc.to_file(saveto)
+    return wc
+
 def main():
-    pattern = './corpus/*'
+    pattern = './corpus_large/*'
     documents = glob.glob(pattern)
-    vectorizer = StemmingTfidfVectorizer(input='filename', max_df=.5, min_df=1, stop_words='english')
+    # vectorizer = StemmingTfidfVectorizer(input='filename', max_df=.5, min_df=1, stop_words='english')
+    vectorizer = TfidfVectorizer(input='filename', max_df=.5, min_df=1, stop_words='english')
     tfidf_matrix = vectorizer.fit_transform(documents)
     terms = vectorizer.get_feature_names()
 
     #most popular terms
-    maxmatrix = np.argmax(tfidf_matrix.toarray(), axis=1)
-    for index, document in enumerate(documents):
-        print("{}: {}".format(document, terms[maxmatrix[index]]))
+    # maxmatrix = np.argmax(tfidf_matrix.toarray(), axis=1)
+    # for index, document in enumerate(documents):
+        # print("{}: {}".format(document, terms[maxmatrix[index]]))
 
     #clustering
     # kmeans = KMeans(n_clusters=5, random_state=0, n_init=20)
@@ -41,29 +63,37 @@ def main():
         # print("{}: {}".format(file, (list(similarity[index]))))
 
     #t-SNE
-    tsne = TSNE(n_components=2,
-                random_state=0,
-                n_iter=10000,
-                metric='cosine',
-                learning_rate=1,
-                perplexity=5)
+    # tsne = TSNE(n_components=2,
+                # random_state=0,
+                # n_iter=10000,
+                # metric='cosine',
+                # learning_rate=1,
+                # perplexity=5)
     dense_tfidf_matrix = tfidf_matrix.todense()
-    points_tsne = tsne.fit_transform(dense_tfidf_matrix)
+    # points_tsne = tsne.fit_transform(dense_tfidf_matrix)
 
     #PCA
-    sklearn_pca = PCA(n_components=2)
-    points_pca = sklearn_pca.fit_transform(dense_tfidf_matrix)
+    # sklearn_pca = PCA(n_components=2)
+    # points_pca = sklearn_pca.fit_transform(dense_tfidf_matrix)
 
     #visualization 
-    matplotlib.style.use('ggplot')
-    df = pd.DataFrame(points_tsne, index=documents, columns=['x', 'y'])
-    fig, ax = plt.subplots()
-    ax.set_xticklabels([])
-    ax.set_yticklabels([])
-    df.plot('x', 'y', kind='scatter', ax=ax)
-    for k, v in df.iterrows():
-        ax.annotate(re.search(r'-(.*?)\.', k).group(1), v)
-    plt.show()
+    # matplotlib.style.use('ggplot')
+    # df = pd.DataFrame(points_tsne, index=documents, columns=['x', 'y'])
+    # fig, ax = plt.subplots()
+    # ax.set_xticklabels([])
+    # ax.set_yticklabels([])
+    # for tic in ax.xaxis.get_major_ticks():
+            # tic.tick1On = tic.tick2On = False
+    # for tic in ax.yaxis.get_major_ticks():
+            # tic.tick1On = tic.tick2On = False
+    # df.plot('x', 'y', kind='scatter', ax=ax, alpha=0)
+    # for k, v in df.iterrows():
+        # ax.annotate(re.search(r'-(.*?)\.', k).group(1), v, fontsize=15)
+    # plt.show()
+
+    tfidf_array = tfidf_matrix.toarray()
+    tfidf_scores = {terms[i]: score for i, score in enumerate(tfidf_array[6, :])}
+    generate_wordcloud(tfidf_scores, 'img/holmes_background.png', 'sherlock_wordcloud.png')
 
 if __name__ == '__main__':
     main()
